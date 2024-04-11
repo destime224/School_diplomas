@@ -1,13 +1,12 @@
 from __future__ import annotations
 import fpdf
-from datetime import date
 from segno import make_qr
 from os import remove, path, mkdir
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from main import MainWindow
-    from datacls import PupilInformation, DiplomaTitleLayoutParametrs
+    from datacls import PupilInformation
 
 class DiplomaLayout:
     months = (
@@ -57,7 +56,7 @@ class DiplomaLayout:
 
         school_name = diploma_params.diploma_school_name
         self.pdf.set_xy(self.title["start_x"]+title_params.school_name.x, self.title["start_y"]+title_params.school_name.y-font_height*6/2)
-        self.pdf.multi_cell(w=50, text=school_name, align="C")
+        self.pdf.multi_cell(w=50, text=school_name, align="C") # type: ignore
 
         if diploma_params.diploma_print_fst:
             fst = diploma_params.diploma_fst_head_of_edu
@@ -68,7 +67,7 @@ class DiplomaLayout:
         pupil_fst = f"{pupil.second_name} {pupil.name} {pupil.third_name}"
         pupil_fst_width = self.pdf.get_string_width(pupil_fst)
         self.pdf.set_xy(self.title["start_x"]+title_params.pupil_fst.x-pupil_fst_width/8, self.title["start_y"]+title_params.pupil_fst.y+font_height)
-        self.pdf.multi_cell(w=pupil_fst_width*3/4, text=pupil_fst, align="C")
+        self.pdf.multi_cell(w=pupil_fst_width*3/4, text=pupil_fst, align="C") # type: ignore
 
         qrcode = make_qr(f"{pupil.second_name}|{pupil.name}|{pupil.third_name}|69|{pupil.diploma_id}|{self.window.ui.diploma_date.date().toString('dd-MM-yyyy')}")
         qrcode.save("dump.png")

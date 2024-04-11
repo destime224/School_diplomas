@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datacls import DiplomaParametrs, PupilFullInformation, PupilInformation, DiplomaTitleLayoutParametrs, Point
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QTableWidgetItem, QMessageBox
-from PySide6.QtCore import Slot, Qt, QDate
+from PySide6.QtCore import Slot, QDate
 from diploma import DiplomaLayout
 from saving import Saver
 from ui.main_ui import Ui_MainWindow
@@ -10,7 +10,7 @@ from datetime import date
 
 from file_parsing import ExcelParser
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QRadioButton
 
@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self) # type: ignore
 
         self.ali_rating = (
             self.ui.left_corner,
@@ -58,9 +58,11 @@ class MainWindow(QMainWindow):
         self.restore_diploma_parametrs()
         self.restore_title_parametrs()
 
-    def get_index_from_radio_buttons(self, t: tuple[QRadioButton]) -> int:
+    def get_index_from_radio_buttons(self, t: tuple[QRadioButton, ...]) -> int:
         for i, rb in enumerate(t):
-            if rb.isChecked(): return i
+            if rb.isChecked():
+                return i
+        return 0
     
     def set_diploma_parametrs(self, dp: DiplomaParametrs = DiplomaParametrs()) -> None:
         self.ui.diploma_school_name.setPlainText(dp.diploma_school_name)
@@ -117,7 +119,7 @@ class MainWindow(QMainWindow):
     def get_pupil_info(self, index: int | None = None) -> PupilInformation:
         if not index:
             index = self.ui.selected_index.value()-1
-        data = []
+        data: list[str | date]= []
         for x in range(self.ui.pupils_list.columnCount()):
             d = self.ui.pupils_list.item(index, x).text()
             if x == 3:
@@ -126,13 +128,13 @@ class MainWindow(QMainWindow):
                 d = "-".join(d)
                 d = date.fromisoformat(d)
             data.append(d)
-        return PupilInformation(*data)
+        return PupilInformation(*data) # type: ignore
     
     def get_full_pupil_info(self, index: int | None = None) -> PupilFullInformation:
         if not index:
             index = self.ui.selected_index.value()-1
-        pupil = self.get_selected_pupil_info(index)
-        d = {}
+        pupil = self.get_pupil_info(index)
+        d: dict[str, int] = {}
         for x in range(self.ui.rating_list.columnCount()):
             k = self.ui.rating_list.horizontalHeaderItem(x).text()
             v = int(self.ui.rating_list.item(index, x).text())
@@ -195,9 +197,8 @@ class MainWindow(QMainWindow):
             pass
 
         file = QFileDialog.getOpenFileName(self, caption="Выберите файл для загрузки", filter=";;".join(self.FILE_FILTERS))
-        parser = None
-        if self.FILE_FILTERS.index(file[1]) == 0:
-            parser = ExcelParser(file[0])
+
+        parser = ExcelParser(file[0])
         subjects = parser.get_subjects()
         pupils = parser.get_pupils_info()
 
@@ -225,7 +226,7 @@ class MainWindow(QMainWindow):
             header = QTableWidgetItem(f"{pupil.second_name} {pupil.name} {pupil.third_name}")
             self.ui.rating_list.setVerticalHeaderItem(i, header)
             for j, subject in enumerate(subjects):
-                rate = pupil.ratings[subject]
+                rate = pupil.ratings.get(subject)
                 if rate is None:
                     rate = ""
                 else:
@@ -236,11 +237,11 @@ class MainWindow(QMainWindow):
         self.ui.pupils_list.cellChanged.connect(self.pupils_list_cell_changed)
 
     @Slot(int, int)
-    def cell_index_selected_from_pupils_list(self, y, _):
+    def cell_index_selected_from_pupils_list(self, y: int, _):
         self.ui.selected_index.setValue(y+1)
 
     @Slot(int)
-    def cell_index_selected_from_selected_index(self, v):
+    def cell_index_selected_from_selected_index(self, v: int):
         if v > self.ui.pupils_list.rowCount():
             self.ui.selected_index.setValue(self.ui.pupils_list.rowCount())
         else:

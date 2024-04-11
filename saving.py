@@ -5,7 +5,7 @@ from dataclasses import asdict
 from datetime import date
 from datacls import DiplomaParametrs, DiplomaTitleLayoutParametrs, Parametrs, Point
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
@@ -28,7 +28,7 @@ class Saver:
             with open(file_name, "wt") as f:
                 self.config.write(f)
 
-    def save_parametrs(self, params: any, section: str) -> None:
+    def save_parametrs(self, params: Any, section: str) -> None:
         d = self.any_to_str(asdict(params))
         self.config[section].update(d)
         self.save_to_file()
@@ -48,7 +48,7 @@ class Saver:
                     v = date.fromisoformat(v)
                 elif ann == "Point":
                     v = v.split("|")
-                    d = {}
+                    d: dict[str, float] = {}
                     for kv in v:
                         K, V = kv.split("==", 1)
                         d.update({K: float(V)})
@@ -76,12 +76,12 @@ class Saver:
             return DiplomaTitleLayoutParametrs()
         return p
 
-    def any_to_str(self, d: dict[str, any]) -> dict[str, str]:
+    def any_to_str(self, d: dict[str, Any]) -> dict[str, str]:
         d = d.copy()
         for k, v in d.items():
-                if type(v) == dict:
-                    t = []
-                    for K, V in v.items():
+                if isinstance(v, dict):
+                    t: list[str] = []
+                    for K, V in v.items(): # type: ignore
                         t.append(f"{K}=={V}")
                     d[k] = "|".join(t)
                 else:
